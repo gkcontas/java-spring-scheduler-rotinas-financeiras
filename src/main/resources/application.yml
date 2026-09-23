@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: scheduler-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/finance
+    username: finance
+    password: finance
+    hikari:
+      # Must comfortably exceed the scheduler pool size: every routine running in
+      # parallel holds a connection, and ShedLock takes one more to grab the lock.
+      maximum-pool-size: 12
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+
+  # Gives running routines time to finish instead of killing them mid-chunk on SIGTERM.
+  lifecycle:
+    timeout-per-shutdown-phase: 40s
+
+server:
+  shutdown: graceful
+
+app:
+  scheduling:
+    # Explicit on purpose. A cron without a zone uses the JVM default, which in a
+    # container is almost always UTC — so the "3 AM job" silently runs at midnight.
+    zone: America/Sao_Paulo
+    pool-size: 4
+    await-termination-seconds: 30
+    bootstrap-enabled: true
+  reconciliation:
+    # Rows are processed in chunks so a backlog does not have to fit in memory.
+    chunk-size: 500
+  interest:
+    daily-rate: 0.001
+  purge:
+    # ISO-8601 durations. fixedDelay counts from the end of the previous run.
+    initial-delay: PT2M
+    fixed-delay: PT1H
+    retention: P30D
+
+logging:
+  level:
+    com.gkcontas.scheduler: INFO
+    net.javacrumbs.shedlock: INFO
