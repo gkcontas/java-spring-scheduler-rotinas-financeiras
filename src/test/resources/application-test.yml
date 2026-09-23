@@ -1,0 +1,14 @@
+app:
+  scheduling:
+    # Tests decide exactly when a routine runs. With the stored crons active, the
+    # reconciliation job would fire on its own every five minutes and quietly change the
+    # data a test is asserting on — a flake that only shows up when the suite happens to
+    # run across a five-minute boundary.
+    bootstrap-enabled: false
+  reconciliation:
+    chunk-size: 500
+  purge:
+    # Pushed far enough out that the purge never fires during a test run.
+    initial-delay: PT10M
+    fixed-delay: PT1H
+    retention: P30D
